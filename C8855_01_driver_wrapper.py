@@ -1,36 +1,38 @@
 import ctypes
 import os
 import time
+from typing import TypeVar
+Pointer_c_ulong = TypeVar('Pointer_c_ulong')
 # Get the absolute path to the DLL
 dll_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'c8855-01api-x64.dll')
-print(dll_path)
 # Load the DLL
 dll = ctypes.WinDLL(dll_path)
 
-# Define the function prototype for connection
+# Define the function connection
 dll.C8855Open.argtypes = []
 dll.C8855Open.restype = ctypes.c_void_p  # Assuming the handle is a void pointer
+def open_device() -> ctypes.c_void_p:
+    return dll.C8855Open()
 
 # Function to reset the device
 dll.C8855Reset.argtypes = [ctypes.c_void_p]
 dll.C8855Reset.restype = ctypes.c_bool
-
-def open_device():
-    return dll.C8855Open()
-
-def reset_device(handle):
+def reset_device(handle: ctypes.c_void_p) -> bool:
     return dll.C8855Reset(handle)
 
-def close_device(handle):
+# Define connection
+dll.C8855Close.argtypes = [ctypes.c_void_p]
+dll.C8855Close.restype = ctypes.c_bool 
+def close_device(handle: ctypes.c_void_p) -> int:
     result = dll.C8855Close(handle)
     return result
 
-# Define the function prototype for C8855Setup
+
+# Define  C8855Setup
 dll.C8855Setup.argtypes = [ctypes.c_void_p, ctypes.c_ubyte, ctypes.c_ubyte, ctypes.c_ushort]
 dll.C8855Setup.restype = ctypes.c_bool
 
-# Function to set up the device with a specific gate time and transfer mode
-def setup_device(handle, gate_time, transfer_mode, number_of_gate):
+def setup_device(handle: ctypes.c_void_p, gate_time: ctypes.c_ubyte, transfer_mode: ctypes.c_ubyte, number_of_gate: ctypes.c_ushort) -> bool:
     return dll.C8855Setup(handle, gate_time, transfer_mode, number_of_gate)
 
 # Gate time settings
@@ -52,29 +54,31 @@ C8855_GATETIME_2S = 0x10
 C8855_GATETIME_5S = 0x11
 C8855_GATETIME_10S = 0x12
 
-# Add other gate time settings as needed
-
 # Transfer mode settings
 C8855_SINGLE_TRANSFER = 1
 C8855_BLOCK_TRANSFER = 2
 
-# Define the function prototype for C8855CountStart
-dll.C8855CountStart.argtypes = [ctypes.c_void_p, ctypes.c_ubyte]
-dll.C8855CountStart.restype = ctypes.c_bool
 # Trigger mode settings
 C8855_SOFTWARE_TRIGGER = 0
 C8855_EXTERNAL_TRIGGER = 1
+
+# Define C8855CountStart
+dll.C8855CountStart.argtypes = [ctypes.c_void_p, ctypes.c_ubyte]
+dll.C8855CountStart.restype = ctypes.c_bool
+
 # Function to start the counting process
-def start_counting(handle, trigger_mode=C8855_SOFTWARE_TRIGGER):
+def start_counting(handle: ctypes.c_void_p, trigger_mode:ctypes.c_ubyte =C8855_SOFTWARE_TRIGGER) -> bool:
     return dll.C8855CountStart(handle, trigger_mode)
 
-# Define the function prototype for C8855ReadData
+
+
+# Define C8855ReadData
 dll.C8855ReadData.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_ulong), ctypes.POINTER(ctypes.c_ubyte)]
 dll.C8855ReadData.restype = ctypes.c_bool
 
 # Function to read data from the device
 
-def read_data(handle, data_buffer):
+def read_data(handle:ctypes.c_void_p, data_buffer:Pointer_c_ulong):
     result_returned = ctypes.c_ubyte()
     success = dll.C8855ReadData(handle, data_buffer, ctypes.byref(result_returned))
 
@@ -89,13 +93,8 @@ dll.C8855CountStop.argtypes = [ctypes.c_void_p]
 dll.C8855CountStop.restype = ctypes.c_bool
 
 # Function to stop the counting process
-def stop_counting(handle):
+def stop_counting(handle: ctypes.c_void_p) -> bool:
     return dll.C8855CountStop(handle)
-
-
-# Define the function prototype for disconnection
-dll.C8855Close.argtypes = [ctypes.c_void_p]
-dll.C8855Close.restype = ctypes.c_bool  # The function returns a boolean
 
 
 
@@ -150,11 +149,6 @@ if __name__ == '__main__':
         time.sleep(1)    
 
 
-        #overall_end_time = time.time()
-        #overall_elapsed_time = overall_end_time - overall_start_time
-        #print(f'Overall time taken: {overall_elapsed_time} seconds')
-        #print('Buffer after reading:')
-        #print(data_buffer)
         print(list(data_buffer))
 
 
