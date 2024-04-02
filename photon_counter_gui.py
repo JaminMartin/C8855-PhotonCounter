@@ -1,9 +1,7 @@
 # Importing tkinter module
 import tkinter as tk
-from tkinter import filedialog
 import numpy as np 
 import ttkbootstrap as tb
-import pandas as pd        
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -11,31 +9,31 @@ from ttkbootstrap.constants import *
 from time import sleep
 import time
 import datetime
-from datetime import date
+
 from C8855_01_driver_wrapper import open_device, reset_device, setup_device, start_counting, stop_counting, close_device, read_data
 import ctypes
 """
 Def Plot
 """
-#plt.style.use('dark_background')
+plt.style.use('dark_background')
 fig = Figure(figsize=(4, 4), dpi = 200)
 ax = fig.add_subplot(111)
 ax.clear
-#ax.set_facecolor('#282a36')
+ax.set_facecolor('#282a36')
 x_to_plot = np.arange(1024)
 y_to_plot = np.zeros(1024)
 ax.set_xlabel('Time')
 ax.set_ylabel('Counts')
-#ax.xaxis.label.set_color('#ffb86c')
-#ax.yaxis.label.set_color('#ffb86c')
+ax.xaxis.label.set_color('#ffb86c')
+ax.yaxis.label.set_color('#ffb86c')
 ax.set_xlim(0, 1024)  # Cover the range of x_to_plot
 ax.set_ylim(0, 10)  # Cover the potential range of y_to_plot
 fig.tight_layout()
 line, = ax.plot(x_to_plot, y_to_plot)
-#fig.patch.set_facecolor('#282a36')
-#ax.tick_params(color='#ffb86c', labelcolor='#ffb86c')
-#for spine in ax.spines.values():
-#        spine.set_edgecolor('#ffb86c')
+fig.patch.set_facecolor('#282a36')
+ax.tick_params(color='#ffb86c', labelcolor='#ffb86c')
+for spine in ax.spines.values():
+        spine.set_edgecolor('#ffb86c')
 
 """
 globals
@@ -57,10 +55,7 @@ trans_byte_value = None
 trigger_byte_value = None
 
 
-
-def measurement():
-     print('ello')
-     
+   
 
 def gatetime_dropdown(e):
     global gate_time
@@ -68,7 +63,6 @@ def gatetime_dropdown(e):
     if scan.running == True: 
         pass 
     else:
-        #print(f'you selected {gatetime_dropdown_select.get()}')
         gate_time = gatetime_dropdown_select.get()
 
         gate_byte_value = gate_time_to_byte[gate_time]
@@ -80,7 +74,7 @@ def transfer_dropdown(e):
     if scan.running == True: 
         pass 
     else:
-        #print(f'you selected {gatetime_dropdown_select.get()}')
+    
         transfer_type = transfer_dropdown_select.get()
         
         trans_byte_value = transfer_type_to_bytes[transfer_type]
@@ -91,7 +85,6 @@ def trigger_dropdown(e):
     if scan.running == True: 
         pass 
     else:
-        #print(f'you selected {gatetime_dropdown_select.get()}')
         trigger_type = trigger_dropdown_select.get()
         
         trigger_byte_value = trigger_type_to_byte[trigger_type]
@@ -246,7 +239,10 @@ def update_plot():
 
 
 
-master = tb.Window()  
+style = tb.Style()
+style.load_user_themes('theme.json')
+style.theme_use('dracula')
+master = style.master
 
 
 pane = tk.Frame(master)
@@ -314,7 +310,6 @@ phase = 0
 # Execute Tkinter
 scan.i = 0  
 scan.running = False   
-
 
 
  
