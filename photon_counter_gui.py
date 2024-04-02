@@ -29,7 +29,7 @@ ax.yaxis.label.set_color('#ffb86c')
 ax.set_xlim(0, 1024)  # Cover the range of x_to_plot
 ax.set_ylim(0, 10)  # Cover the potential range of y_to_plot
 fig.tight_layout()
-line, = ax.plot(x_to_plot, y_to_plot)
+line, = ax.plot(x_to_plot, y_to_plot, color = '#bd93f9')
 fig.patch.set_facecolor('#282a36')
 ax.tick_params(color='#ffb86c', labelcolor='#ffb86c')
 for spine in ax.spines.values():
@@ -150,6 +150,7 @@ def scan():
         
     # Check if the handle is valid
         print(f'Photon counter handle: {device_handle}')
+        
 
         if device_handle:
             success = reset_device(device_handle)
