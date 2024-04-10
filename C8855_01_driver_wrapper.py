@@ -96,8 +96,9 @@ dll.C8855CountStop.restype = ctypes.c_bool
 def stop_counting(handle: ctypes.c_void_p) -> bool:
     return dll.C8855CountStop(handle)
 
-
-
+#TODO!
+#create a higher level measurement class to simplify the API for future integrations
+# this could be as simple as an abstraction over the loop run below. For versatility it could also return a tuple of the array and sum of counts
 if __name__ == '__main__':
     # Example usage
     # Call the function to connect to the device

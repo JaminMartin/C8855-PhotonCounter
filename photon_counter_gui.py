@@ -220,7 +220,7 @@ def scan():
         iterator = 0
         scan.i = 0
 
-
+#TODO! handle the data more effectively and update the plot according to the number of bins 
 
 def update_plot():
     global x_to_plot, y_to_plot, ax, line
