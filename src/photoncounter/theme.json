@@ -1,0 +1,30 @@
+{
+    "themes": [
+      {
+        "gruvbox": {
+          "type": "dark",
+          "colors": {
+            
+              "primary": "#83a598",     
+              "secondary": "#d3869b", 
+              "success": "#b8bb26",     
+              "info": "#fabd2f",     
+              "warning": "#fe8019",   
+              "danger": "#FB4934",    
+              "light": "#A89984",       
+              "dark": "#282828",        
+              "bg":"#282828",    
+              "fg": "#EBDBB2",      
+              "selectbg": "#504945",     
+              "selectfg": "#EBDBB2",    
+              "border": "#1d2021",      
+              "inputfg": "#EBDBB2",     
+              "inputbg": "#282828",
+              "active": "#8ec07c"
+          
+          }
+        }
+      }
+    ]
+  }
+  

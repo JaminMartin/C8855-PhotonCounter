@@ -1,4 +1,3 @@
-# Importing tkinter module
 import tkinter as tk
 import numpy as np 
 import ttkbootstrap as tb
@@ -9,32 +8,9 @@ from ttkbootstrap.constants import *
 from time import sleep
 import time
 import datetime
-
-from C8855_01_driver_wrapper import open_device, reset_device, setup_device, start_counting, stop_counting, close_device, read_data
-import ctypes
-"""
-Def Plot
-"""
-plt.style.use('dark_background')
-fig = Figure(figsize=(4, 4), dpi = 200)
-ax = fig.add_subplot(111)
-ax.clear
-ax.set_facecolor('#282a36')
-x_to_plot = np.arange(1024)
-y_to_plot = np.zeros(1024)
-ax.set_xlabel('Time')
-ax.set_ylabel('Counts')
-ax.xaxis.label.set_color('#ffb86c')
-ax.yaxis.label.set_color('#ffb86c')
-ax.set_xlim(0, 1024)  # Cover the range of x_to_plot
-ax.set_ylim(0, 10)  # Cover the potential range of y_to_plot
-fig.tight_layout()
-line, = ax.plot(x_to_plot, y_to_plot, color = '#bd93f9')
-fig.patch.set_facecolor('#282a36')
-ax.tick_params(color='#ffb86c', labelcolor='#ffb86c')
-for spine in ax.spines.values():
-        spine.set_edgecolor('#ffb86c')
-
+from spcs_instruments import C8855_counting_unit
+import toml
+from pathlib import Path
 """
 globals
 """
@@ -53,9 +29,96 @@ init_graph = None
 gate_byte_value = None
 trans_byte_value = None
 trigger_byte_value = None
+number_of_bins = None
+gate_time_label = None
+gate_time = None
+counts = 0
+counter = None
+style = tb.Style()
+theme_path = Path(__file__).parent / "theme.json"
+style.load_user_themes(theme_path)
+style.theme_use('gruvbox')
+master = style.master
+gate_time_to_byte = {
+    '50us': 0x02,
+    '100us': 0x03,
+    '200us': 0x04,
+    '500us': 0x05,
+    '1ms': 0x06,
+    '2ms': 0x07,
+    '5ms': 0x08,
+    '10ms': 0x09,
+    '20ms': 0x0A,
+    '50ms': 0x0B,
+    '100ms': 0x0C,
+    '200ms': 0x0D,
+    '500ms': 0x0E,
+    '1s': 0x0F,
+    '2s': 0x10,
+    '5s': 0x11,
+    '10s': 0x12,
+}
+
+pane = tk.Frame(master)
+pane.grid(row=0, column=0, padx=10, pady=5)
+pane2 = tk.Frame(master)
+pane2.grid(row=0, column=1, padx=10, pady=5)
+
+gatetime_label = tb.Label(pane,text='Gate time:',).grid(row=1, column=0, padx=5, pady=5)
 
 
-   
+
+config = {
+    "device": {
+        "C8855_photon_counter": {
+            "dll_path": "C:\\Users\\SPCS\\Documents\\C8855-PhotonCounter\\c8855-01api.dll",
+            "gate_time": "",
+            "averages": 1,
+            "transfer_type": "block_transfer",
+            "trigger_type": "",
+            "number_of_gates": "",
+            "measure_mode": "all"
+        }
+    }
+}
+
+
+
+
+
+
+
+
+def setup_plot():
+    plt.style.use('dark_background')
+    fig = Figure(figsize=(4, 4), dpi = 200)
+    ax = fig.add_subplot(111)
+    ax.clear
+    ax.set_facecolor('#282828')
+    x_to_plot = np.arange(1024)
+    y_to_plot = np.zeros(1024)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Counts')
+    ax.xaxis.label.set_color('#ebdbb2')
+    ax.yaxis.label.set_color('#ebdbb2')
+    ax.set_xlim(0, 150)  # Cover the range of x_to_plot
+    ax.set_ylim(0, 10)  # Cover the potential range of y_to_plot
+    fig.tight_layout()
+    line, = ax.plot(x_to_plot, y_to_plot, color = '#b8bb26')
+    fig.patch.set_facecolor('#282828')
+    ax.tick_params(color='#ebdbb2', labelcolor='#ebdbb2')
+    for spine in ax.spines.values():
+            spine.set_edgecolor('#ebdbb2')
+    return fig, ax, line, y_to_plot, x_to_plot
+
+def number_of_bins_dropdown(e):
+
+    global number_of_bins
+    
+    if scan.running == True: 
+        pass 
+    else:
+        number_of_bins = int(number_of_bins_select.get())
 
 def gatetime_dropdown(e):
     global gate_time
@@ -65,7 +128,6 @@ def gatetime_dropdown(e):
     else:
         gate_time = gatetime_dropdown_select.get()
 
-        gate_byte_value = gate_time_to_byte[gate_time]
        
 
 def transfer_dropdown(e):
@@ -77,7 +139,6 @@ def transfer_dropdown(e):
     
         transfer_type = transfer_dropdown_select.get()
         
-        trans_byte_value = transfer_type_to_bytes[transfer_type]
 
 def trigger_dropdown(e):
     global trigger_type
@@ -87,7 +148,6 @@ def trigger_dropdown(e):
     else:
         trigger_type = trigger_dropdown_select.get()
         
-        trigger_byte_value = trigger_type_to_byte[trigger_type]
 
 
 def start():
@@ -99,11 +159,15 @@ def start():
             global y_to_plot 
             global counts 
             global start_time
-         
-            # if counter.emulation == True and interupt_type != 'pause':
-            #     counts = np.zeros(1024)
-            # else: 
-            #     counts = np.zeros(1024)
+            global counter
+
+            config["device"]["C8855_photon_counter"]["gate_time"] = gatetime_dropdown_select.get()
+            config["device"]["C8855_photon_counter"]["transfer_type"] = transfer_dropdown_select.get()
+            config["device"]["C8855_photon_counter"]["trigger_type"] = trigger_dropdown_select.get()
+            config["device"]["C8855_photon_counter"]["number_of_gates"] = int(number_of_bins_select.get())
+            with open("config.toml", "w") as f:
+                toml.dump(config, f)
+            counter = counter = C8855_counting_unit("config.toml", connect_to_pyfex=False)
             if interupt_type == 'stop' or interupt_type == 'finished':
                 y_to_plot = []
                 x_to_plot = []
@@ -144,59 +208,27 @@ def scan():
     global init_graph
     global y_to_plot
     global x_to_plot
+    global number_of_bins
+    global counts
+    global counter
     if scan.running == True:
-    
-        device_handle = open_device()
-        
-    # Check if the handle is valid
-        print(f'Photon counter handle: {device_handle}')
-        
-
-        if device_handle:
-            success = reset_device(device_handle)
-            if success:
-                print('C8855Reset succeeded.')
-            else:
-                print('C8855Reset failed.')
-                scan.running = False
-        else:
-            print('Device handle not obtained. Initialization failed.')
-            scan.running = False
-
-        if device_handle:
-            success = setup_device(device_handle, gate_time=gate_byte_value, transfer_mode=trans_byte_value, number_of_gate=512)
-            if success:
-                print('Device setup succeeded.')
-            else:
-                print('Device setup failed.')
-                scan.running = False
-        else:
-            print('Device handle not obtained. Initialization failed.')
-            scan.running = False
-
-        success = start_counting(device_handle, trigger_mode= trigger_byte_value)
-        if success:
-            print('Counting started.')
-        else:
-            print('Counting start failed.')
-            scan.running = False
-
-        data_buffer = (ctypes.c_ulong * 1024)()
-       
-        read_data(device_handle, data_buffer)  
-
-        success = stop_counting(device_handle)
-        if success:
-            print('Counting stopped.')
-        else:
-            print('Counting stop failed.')
-            scan.running = False
+        data_buffer, counts = counter.measure()
         time.sleep(1)    
-        y_to_plot = np.asarray(list(data_buffer))
-        x_to_plot = np.arange(0,1024)
+        
+        
 
 
+        alpha = ''.join(filter(str.isalpha, gate_time))
+        nums = ''.join(filter(str.isdigit, gate_time))
 
+        
+        y_to_plot = data_buffer
+
+        max_x = int(nums)*(number_of_bins-1)
+        x_to_plot = np.arange(0, int(number_of_bins_select.get()))*int(nums)
+
+        ax.set_xlim(0,max_x)
+        ax.set_xlabel('Time ('+alpha+ ')')
 
         update_plot()
         scan.i += 1
@@ -205,7 +237,6 @@ def scan():
 
 
     elif scan.running == False and interupt_type == 'stop':
-        print('Scan stopped saving data regardless...')
         iterator = 0
         scan.i = 0
    
@@ -220,58 +251,20 @@ def scan():
         iterator = 0
         scan.i = 0
 
-#TODO! handle the data more effectively and update the plot according to the number of bins 
-
 def update_plot():
-    global x_to_plot, y_to_plot, ax, line
+    global x_to_plot, y_to_plot, ax, line,number_of_bins, counts
 
-    # Update line data
+
     line.set_xdata(x_to_plot)
     line.set_ydata(y_to_plot)
-  
-    # Rescale the axes to fit the updated data
-    ax.set_ylim(min(y_to_plot), max(y_to_plot + 10))
+    type(y_to_plot)
+    print(y_to_plot)
+
+    ax.set_ylim(min(y_to_plot[0:int(number_of_bins)]), max(y_to_plot[0:int(number_of_bins)] + 10))
 
     # Redraw the plot
     ax.figure.canvas.draw()
-    counts = np.sum(y_to_plot)
-    counts_var.set(counts)
-
-
-
-
-style = tb.Style()
-style.load_user_themes('theme.json')
-style.theme_use('dracula')
-master = style.master
-
-
-pane = tk.Frame(master)
-pane.grid(row=0, column=0, padx=10, pady=5)
-pane2 = tk.Frame(master)
-pane2.grid(row=0, column=1, padx=10, pady=5)
-
-gatetime_label = tb.Label(pane,text='Gate time:',).grid(row=1, column=0, padx=5, pady=5)
-gate_time_to_byte = {
-    '50us': 0x02,
-    '100us': 0x03,
-    '200us': 0x04,
-    '500us': 0x05,
-    '1ms': 0x06,
-    '2ms': 0x07,
-    '5ms': 0x08,
-    '10ms': 0x09,
-    '20ms': 0x0A,
-    '50ms': 0x0B,
-    '100ms': 0x0C,
-    '200ms': 0x0D,
-    '500ms': 0x0E,
-    '1s': 0x0F,
-    '2s': 0x10,
-    '5s': 0x11,
-    '10s': 0x12,
-}
-
+    counts = counts
 
 counts_var = tk.StringVar()  
 counts_var.set('0')
@@ -284,18 +277,31 @@ gatetime_dropdown_select.bind("<<ComboboxSelected>>", gatetime_dropdown)
 
 transfer_label = tb.Label(pane,text='Transfer Type:',).grid(row=2, column=0, padx=5, pady=5)
 
-transfer_type_to_bytes = {'Block (recomended)': 2, 'Single': 1}
-transfer_types = list(transfer_type_to_bytes.keys())
+transfer_type_to_bytes = {'Block (recomended)': "block_transfer", 'Single': "single_transfer"}
+transfer_types = list(transfer_type_to_bytes.values())
 transfer_dropdown_select = tb.Combobox(pane, values = transfer_types)
 transfer_dropdown_select.grid(row=2, column=1,padx=5, pady=5)
 transfer_dropdown_select.bind("<<ComboboxSelected>>", transfer_dropdown)
 
 trigger_label = tb.Label(pane,text='Trigger:',).grid(row=3, column=0, padx=5, pady=5)
-trigger_type_to_byte = {'Internal (software)': 0, 'External': 1}
-trigger_types = list(trigger_type_to_byte.keys())
+trigger_type_to_byte = {'Internal (software)': "software", 'External': "external"}
+trigger_types = list(trigger_type_to_byte.values())
 trigger_dropdown_select = tb.Combobox(pane, values = trigger_types)
 trigger_dropdown_select.grid(row=3, column=1,padx=5, pady=5)
 trigger_dropdown_select.bind("<<ComboboxSelected>>", trigger_dropdown)
+
+
+
+number_of_bins_label = tb.Label(pane,text='Number of bins',).grid(row=4, column=0, padx=5, pady=5)
+bins_list = [32,64,128,256,512]
+number_of_bins_select = tb.Combobox(pane, values=bins_list)
+number_of_bins_select.grid(row=4, column=1,padx=5, pady=5)
+number_of_bins_select.bind("<<ComboboxSelected>>", number_of_bins_dropdown)
+
+
+
+
+
 
 
 start_scan = tb.Button(pane, text='Start Measure',command = start ).grid(row=9, column=0, padx=5, pady=5)
@@ -303,17 +309,17 @@ stop_scan = tb.Button(pane, text='Stop Measure',command = stop).grid(row=9, colu
 
 counts_label = tb.Label(pane, text='Counts:',).grid(row=10, column=0, padx=5, pady=5)
 current_counts = tb.Label(pane,textvariable=counts_var,).grid(row=10, column=1, padx=5, pady=5)
-
+fig, ax, line, y_to_plot, x_to_plot = setup_plot()
 canvas = FigureCanvasTkAgg(fig, master=pane2)
 canvas.draw()
 canvas.get_tk_widget().grid(row =7,column=1)
 phase = 0
-# Execute Tkinter
 scan.i = 0  
 scan.running = False   
 
 
- 
-master.mainloop()
+def run_app():
+    master.mainloop()
 
-
+if __name__ == "__main__":
+    run_app()

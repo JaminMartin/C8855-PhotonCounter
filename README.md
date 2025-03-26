@@ -31,11 +31,3 @@ As mentioned, the GUI is inspired by Hamamatsu's LabView GUI. It supports both i
 
 
 It runs natively in a dark environment-friendly colour scheme however, you can change this in the `theme.json` file & `matplotlib` styling at the beginning of the script. 
-
-
-
-
-## TODO's
- - Adjust time (x-axis) to reflect the number of gates + gate time
- - Write a connection and diagnostic script
- - Expose a higher level function called `measure()` that can take a `config.toml` file for easy integration into [SPECTRE](https://github.com/JaminMartin/RECLAS/tree/main)

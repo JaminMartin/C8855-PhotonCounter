@@ -160,5 +160,8 @@ cython_debug/
 #.idea/
 c8855-01api-x64.dll
 libusb-1.0.dll
+*.dll
+*.zip
+*.dl_
 
 
