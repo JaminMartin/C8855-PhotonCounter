@@ -17,7 +17,7 @@ requires-python = ">= 3.8"
 "counter_gui" = "photoncounter.gui:run_app"
 
 [project.scripts]
-"configure_dll_c8855" = "photoncounter.configure:configure_dll"
+"configure_dll_c8855" = "photoncounter.configure:configure_photoncounter"
 
 [build-system]
 requires = ["hatchling"]

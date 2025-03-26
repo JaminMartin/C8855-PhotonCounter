@@ -1,8 +1,0 @@
-[device.C8855_photon_counter]
-dll_path = "C:\\Users\\SPCS\\Documents\\C8855-PhotonCounter\\c8855-01api.dll"
-gate_time = "5ms"
-averages = 1
-transfer_type = "block_transfer"
-trigger_type = "software"
-number_of_gates = 512
-measure_mode = "all"

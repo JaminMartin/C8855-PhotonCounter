@@ -9,6 +9,7 @@ from time import sleep
 import time
 import datetime
 from spcs_instruments import C8855_counting_unit
+from spcs_instruments.spcs_instruments_utils import load_config
 import toml
 from pathlib import Path
 """
@@ -63,24 +64,13 @@ pane = tk.Frame(master)
 pane.grid(row=0, column=0, padx=10, pady=5)
 pane2 = tk.Frame(master)
 pane2.grid(row=0, column=1, padx=10, pady=5)
-
+master.iconbitmap(Path(__file__).parent / "lightbulb.ico")
+master.title('C8855 Photon Counter')
 gatetime_label = tb.Label(pane,text='Gate time:',).grid(row=1, column=0, padx=5, pady=5)
 
 
 
-config = {
-    "device": {
-        "C8855_photon_counter": {
-            "dll_path": "C:\\Users\\SPCS\\Documents\\C8855-PhotonCounter\\c8855-01api.dll",
-            "gate_time": "",
-            "averages": 1,
-            "transfer_type": "block_transfer",
-            "trigger_type": "",
-            "number_of_gates": "",
-            "measure_mode": "all"
-        }
-    }
-}
+config = load_config(Path(__file__).parent / "config.toml")
 
 
 
