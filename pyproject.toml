@@ -1,6 +1,6 @@
 [project]
 name = "c8855-photoncounter"
-version = "0.2.0"
+version = "0.2.1"
 description = "Gui for c8855-photon counter"
 authors = [
     { name = "Jamin Martin", email = "jamin.martin1@gmail.com" }
