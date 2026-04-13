@@ -164,3 +164,4 @@ libusb-1.0.dll
 *.zip
 *.dl_
 */*/config.toml
+.direnv

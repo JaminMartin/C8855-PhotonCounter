@@ -9,11 +9,11 @@ from time import sleep
 import time
 import datetime
 from spcs_instruments import C8855_counting_unit
-from spcs_instruments.spcs_instruments_utils import load_config
+from rex_utils import load_config
 import toml
 from pathlib import Path
 from sys import base_prefix
-
+from os import environ
 environ["TCL_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tcl8.6")
 environ["TK_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tk8.6")
 """
@@ -163,7 +163,7 @@ def start():
         )
         with open("config.toml", "w") as f:
             toml.dump(config, f)
-        counter = counter = C8855_counting_unit("config.toml", connect_to_pyfex=False)
+        counter = counter = C8855_counting_unit("config.toml", connect_to_rex=False)
         if interupt_type == "stop" or interupt_type == "finished":
             y_to_plot = []
             x_to_plot = []
