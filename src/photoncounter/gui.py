@@ -12,7 +12,10 @@ from spcs_instruments import C8855_counting_unit
 from spcs_instruments.spcs_instruments_utils import load_config
 import toml
 from pathlib import Path
+from sys import base_prefix
 
+environ["TCL_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tcl8.6")
+environ["TK_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tk8.6")
 """
 globals
 """
